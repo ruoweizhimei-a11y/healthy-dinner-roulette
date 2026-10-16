@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ヘルシー夕飯決定ルーレット</title>
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --secondary-color: #27ae60;
+            --bg-color: #f4f9f4;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        p.subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* フィルターボタンエリア */
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background-color: #e2f0d9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--secondary-color);
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* ルーレットディスプレイ */
+        .roulette-display {
+            font-size: 1.8rem;
+            font-weight: bold;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef8ee;
+            border: 3px dashed var(--primary-color);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            padding: 0 15px;
+            word-break: break-all;
+        }
+
+        /* スタートボタン */
+        .start-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+            transition: transform 0.1s, background-color 0.2s;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
+        .start-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .start-btn:disabled {
+            background-color: #bdc3c7;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* 結果カード */
+        .result-card {
+            margin-top: 30px;
+            text-align: left;
+            background: #fafafa;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-card h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.4rem;
+        }
+
+        .tag-badge {
+            display: inline-block;
+            background: #d4edda;
+            color: #155724;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .info-row {
+            margin: 8px 0;
+            font-size: 0.95rem;
+        }
+
+        .recipe-box {
+            margin-top: 15px;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .recipe-box h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+
+        .recipe-box ul, .recipe-box ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .recipe-box li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🥗 ヘルシー夕飯決定ルーレット</h1>
+        <p class="subtitle">ダイエット中のメニュー選びを楽しく手助けします！</p>
+
+        <!-- カテゴリ絞り込み -->
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="setCategory('all', this)">すべて</button>
+            <button class="filter-btn" onclick="setCategory('protein', this)">🔥 高タンパク (ガッツリ)</button>
+            <button class="filter-btn" onclick="setCategory('lowcal', this)">🍃 超低カロリー (500kcal以下)</button>
+            <button class="filter-btn" onclick="setCategory('quick', this)">⚡ 時短 (10分以内)</button>
+        </div>
+
+        <!-- ルーレット画面 -->
+        <div class="roulette-display" id="displayBox">
+            ボタンを押してね！
+        </div>
+
+        <!-- 回すボタン -->
+        <button class="start-btn" id="startBtn" onclick="startRoulette()">ルーレットを回す！</button>
+
+        <!-- 結果詳細カード -->
+        <div class="result-card" id="resultCard">
+            <span class="tag-badge" id="resTag"></span>
+            <h3 id="resTitle"></h3>
+            <div class="info-row"><strong>🔥 推定カロリー：</strong> <span id="resCal"></span></div>
+            <div class="info-row"><strong>💪 PFCバランス：</strong> <span id="resPfc"></span></div>
+            
+            <div class="recipe-box">
+                <h4>🛒 材料 (1人分)</h4>
+                <ul id="resIngredients"></ul>
+            </div>
+
+            <div class="recipe-box">
+                <h4>🍳 簡単な作り方</h4>
+                <ol id="resSteps"></ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // メニューデータ（材料・作り方を追加）
+        const menuList = [
+            { 
+                name: "鶏ササミとアボカドの和風サラダ", 
+                category: "protein", 
+                cal: "約 320 kcal", 
+                pfc: "P: 28g / F: 18g / C: 8g",
+                ingredients: ["鶏ササミ 2本", "アボカド 1/2個", "レタスやベビーリーフ 適量", "ポン酢 大さじ1", "ごま油 小さじ1"],
+                steps: ["ササミを酒少量（分量外）をかけてレンジで2分加熱しほぐす。", "アボカドを一口大に切る。", "野菜・ササミ・アボカドを盛り付け、ポン酢とごま油を混ぜたドレッシングをかける。"]
+            },
+            { 
+                name: "豆腐とキムチのピリ辛スンドゥブ風", 
+                category: "lowcal", 
+                cal: "約 250 kcal", 
+                pfc: "P: 18g / F: 10g / C: 12g",
+                ingredients: ["絹ごし豆腐 1/2丁", "キムチ 50g", "卵 1個", "水 200ml", "鶏ガラスープの素 小さじ1", "醤油・ごま油 少々"],
+                steps: ["鍋に水、鶏ガラスープの素、キムチを入れて煮立たせる。", "豆腐を崩しながら入れ、ひと煮立ちさせる。", "溶き卵を回し入れ、仕上げにごま油を少々垂らす。"]
+            },
+            { 
+                name: "白滝のヘルシーチャンプルー", 
+                category: "lowcal", 
+                cal: "約 210 kcal", 
+                pfc: "P: 16g / F: 9g / C: 10g",
+                ingredients: ["白滝 1パック", "豚もも薄切り肉 50g", "木綿豆腐 1/2丁", "溶き卵 1個", "めんつゆ（3倍濃縮） 大さじ1"],
+                steps: ["白滝は下茹でして食べやすい長さに切る。", "フライパンで豆腐と豚肉を炒め、火が通ったら白滝を加える。", "めんつゆで味付けし、最後に溶き卵を加えて炒め合わせる。"]
+            },
+            { 
+                name: "マグロとアボカドのポキ丼（玄米使用）", 
+                category: "protein", 
+                cal: "約 450 kcal", 
+                pfc: "P: 30g / F: 15g / C: 45g",
+                ingredients: ["マグロ赤身 80g", "アボカド 1/2個", "玄米ごはん 120g", "醤油 大さじ1", "ごま油・白ごま 少々"],
+                steps: ["マグロとアボカドを1cm角に切る。", "醤油とごま油と和える。", "茶碗に盛った玄米ごはんの上にのせ、白ごまを振る。"]
+            },
+            { 
+                name: "納豆とオクラのねばねばオートミール粥", 
+                category: "quick", 
+                cal: "約 280 kcal", 
+                pfc: "P: 14g / F: 6g / C: 40g",
+                ingredients: ["オートミール 30g", "水 150ml", "納豆 1パック", "オクラ（刻み） 2本", "和風だし・めんつゆ 少々"],
+                steps: ["耐熱容器にオートミールと水を入れ、電子レンジ(600W)で1分半加熱する。", "納豆と刻んだオクラをのせる。", "めんつゆをお好みで少量かけてよく混ぜる。"]
+            },
+            { 
+                name: "焼き油揚げの納豆・チーズ挟み", 
+                category: "quick", 
+                cal: "約 300 kcal", 
+                pfc: "P: 22g / F: 20g / C: 5g",
+                ingredients: ["油揚げ 1枚", "納豆 1パック", "ピザ用チーズ 20g", "ネギ 少々"],
+                steps: ["油揚げを半分に切り、袋状に開く。", "付属のタレと混ぜた納豆、チーズ、ネギを詰めてつまようじで止める。", "オーブントースターで表面がカリッとするまで3〜5分焼く。"]
+            }
+        ];
+
+        let currentCategory = 'all';
+        let isSpinning = false;
+
+        function setCategory(category, btn) {
+            if (isSpinning) return;
+            currentCategory = category;
+            
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        function startRoulette() {
+            if (isSpinning) return;
+            isSpinning = true;
+            
+            const startBtn = document.getElementById('startBtn');
+            const displayBox = document.getElementById('displayBox');
+            const resultCard = document.getElementById('resultCard');
+            
+            startBtn.disabled = true;
+            resultCard.style.display = 'none';
+
+            const filteredList = currentCategory === 'all' 
+                ? menuList 
+                : menuList.filter(item => item.category === currentCategory);
+
+            let count = 0;
+            const maxCount = 20;
+            const intervalTime = 70;
+
+            const timer = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * filteredList.length);
+                displayBox.textContent = filteredList[randomIndex].name;
+                count++;
+
+                if (count >= maxCount) {
+                    clearInterval(timer);
+                    
+                    const finalIndex = Math.floor(Math.random() * filteredList.length);
+                    const selected = filteredList[finalIndex];
+                    
+                    displayBox.textContent = selected.name;
+                    showResult(selected);
+                    
+                    isSpinning = false;
+                    startBtn.disabled = false;
+                }
+            }, intervalTime);
+        }
+
+        function showResult(item) {
+            document.getElementById('resTitle').textContent = item.name;
+            document.getElementById('resCal').textContent = item.cal;
+            document.getElementById('resPfc').textContent = item.pfc;
+            
+            // 材料リストの更新
+            const ingList = document.getElementById('resIngredients');
+            ingList.innerHTML = '';
+            item.ingredients.forEach(ing => {
+                const li = document.createElement('li');
+                li.textContent = ing;
+                ingList.appendChild(li);
+            });
+
+            // 作り方リストの更新
+            const stepList = document.getElementById('resSteps');
+            stepList.innerHTML = '';
+            item.steps.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                stepList.appendChild(li);
+            });
+
+            let tagText = "すべて";
+            if (item.category === 'protein') tagText = "🔥 高タンパク";
+            if (item.category === 'lowcal') tagText = "🍃 超低カロリー";
+            if (item.category === 'quick') tagText = "⚡ 時短";
+            document.getElementById('resTag').textContent = tagText;
+
+            document.getElementById('resultCard').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
